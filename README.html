@@ -1,0 +1,238 @@
+<html>
+<head>
+  <script type="text/javascript">
+
+    var sequence = [], user = [], cpu = [], T = [], lpointer = 0, rpointer = 0, userPoint = 0, cpuPoint = 0;
+
+    function sumArray(A){
+      var sum = 0;
+      for(var i = 0; i < A.length; i++){
+        sum = sum + A[i];
+      }
+      return sum;
+    }
+
+    function getRndInteger(min, max) {
+      return Math.floor(Math.random() * (max - min) ) + min;
+    }
+
+    function normal(mu,nsamples){ // using central limit
+
+      var run_total = 0.0;
+      for(var i=0 ; i < nsamples ; i++){
+        run_total = run_total + getRndInteger(1, 20) ;
+      }
+      return run_total+mu;
+
+  }
+
+
+    function generateSequence(length){
+      var x = [];
+      for(var i = 1; i <= length; i++){
+        //x.push(Math.floor(normal(50,3)));
+        var y = getRndInteger(1,length);
+        if (y > 0.7*length){
+          x.push(getRndInteger(21, 40));
+        } else if (y > 0.5*length){
+          x.push(getRndInteger(11, 20));
+        } else {
+          x.push(getRndInteger(1, 10));
+        }
+      }
+
+      return x;
+    }
+
+    function generateSequence(length){
+      var x = [];
+      for(var i = 1; i <= length; i++){
+        //x.push(Math.floor(normal(50,3)));
+        var y = getRndInteger(1,length);
+
+        x.push(getRndInteger(1, 50));
+
+      }
+
+      return x;
+    }
+
+    function getLength(){
+      var length = parseInt(document.getElementById("sequence length").value);
+      lpointer = 0;
+      rpointer = length-1;
+      return length;
+    }
+
+    function computeT(i,j){
+      if(i == j){
+        T[i][j] = sequence[i];
+      }
+      else if (i == j-1) {
+        T[i][j] = Math.max(sequence[i], sequence[j]);
+      }
+      else if (i < j -1) {
+        if(T[i+2][j] == -1){
+          computeT(i+2,j);
+        }
+        if(T[i+1][j-1] == -1){
+          computeT(i+1,j-1);
+        }
+        if(T[i][j-2] == -1){
+          computeT(i,j-2);
+        }
+        var left = sequence[i] + Math.min(T[i+2][j],T[i+1][j-1]);
+        var right = sequence[j] + Math.min(T[i][j-2],T[i+1][j-1]);
+        T[i][j] = Math.max(left,right);
+      }
+    }
+
+    function click1(){
+
+      document.getElementById("button1").disabled = true;
+      document.getElementById("button2").disabled = true;
+
+      var length = getLength();
+
+      sequence = generateSequence(length);
+      document.getElementById("generated sequence").innerHTML = "Generated sequence: "+ sequence.toString();
+      document.getElementById("current sequence").innerHTML = "Remaining sequence: " + sequence.slice(lpointer,rpointer+1);
+
+      T = new Array(length);
+      for(var i = 0; i < length; i++){
+        T[i] = new Array(length);
+        for(var j = 0; j < length; j++){
+          if(i <= j){
+            T[i][j] = -1;
+          } else {
+            T[i][j] = 0;
+          }
+        }
+      }
+
+      computeT(0, length-1);
+
+    }
+
+    function click2(){
+
+      document.getElementById("button1").disabled = true;
+      document.getElementById("button2").disabled = true;
+
+      var length = getLength();
+
+      sequence = generateSequence2(length);
+      document.getElementById("generated sequence").innerHTML = "Generated sequence: "+ sequence.toString();
+      document.getElementById("current sequence").innerHTML = "Remaining sequence: " + sequence.slice(lpointer,rpointer+1);
+
+      T = new Array(length);
+      for(var i = 0; i < length; i++){
+        T[i] = new Array(length);
+        for(var j = 0; j < length; j++){
+          if(i <= j){
+            T[i][j] = -1;
+          } else {
+            T[i][j] = 0;
+          }
+        }
+      }
+
+      computeT(0, length-1);
+
+    }
+
+    function checkFinish(){
+      if(lpointer > rpointer){
+        var result = "";
+        if (userPoint > cpuPoint){
+          result = "You win!";
+        } else if (userPoint < cpuPoint) {
+          result = "You lost!";
+        } else {
+          result = "Draw!";
+        }
+        document.getElementById("game finish").innerHTML = "Game finished: User point: " + sumArray(user) + ", CPU point: " + sumArray(cpu) + ". " + result ;
+        document.getElementById("buttonLeft").disabled = true;
+        document.getElementById("buttonRight").disabled = true;
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+    function userMove(x){
+      if(x == 1){
+        user.push(sequence[lpointer]);
+        userPoint = userPoint + sequence[lpointer];
+        lpointer = lpointer + 1;
+      } else {
+        user.push(sequence[rpointer]);
+        userPoint = userPoint + sequence[rpointer];
+        rpointer = rpointer - 1;
+      }
+      document.getElementById("current sequence").innerHTML = "Remaining sequence: " + sequence.slice(lpointer,rpointer+1);
+      document.getElementById("user numbers").innerHTML = "User numbers: " + user.toString() + ". Total: " + userPoint;
+
+      f = checkFinish();
+      if(f == false){
+        engine();
+      }
+
+
+    }
+
+    function engine(){
+      if(T[lpointer+1][rpointer] >= T[lpointer][rpointer-1] ){
+        cpuMove(2);
+      } else {
+        cpuMove(1);
+      }
+    }
+
+
+
+    function cpuMove(x){
+      if(x == 1){
+        cpu.push(sequence[lpointer]);
+        cpuPoint = cpuPoint + sequence[lpointer];
+        lpointer = lpointer + 1;
+      } else {
+        cpu.push(sequence[rpointer]);
+        cpuPoint = cpuPoint + sequence[rpointer];
+        rpointer = rpointer - 1;
+      }
+      document.getElementById("current sequence").innerHTML = "Remaining sequence: " + sequence.slice(lpointer,rpointer+1);
+      document.getElementById("cpu numbers").innerHTML = "Cpu numbers: " + cpu.toString() + ". Total: " + cpuPoint;
+
+      checkFinish();
+
+
+    }
+
+    function reset(){
+      location.reload();
+
+    }
+
+
+
+  </script>
+</head>
+<body>
+  <p> The game is very simple. We generate a sequence of numbers of a given length. <br>
+    When it's your turn, you can pick either the leftmost or the <br>
+  rightmost number of the remaining sequence. Same thing applies to the CPU. <br>
+  The player with the larger final sum wins. <br>
+  This problem can be solved using Dynamic Programming (hint: running time O(n^2)). Written by HV.</p>
+  <p>Sequence length: <input type="text" id="sequence length" value="30"> </p>
+  <p> <input type="button" onclick="click1()" id="button1" value="Generate Sequence (tricky)"><input type="button" onclick="click1()" id="button2" value="Generate Sequence (uniformly random)"> </p>
+  <p id = "generated sequence"> <p>
+  <p> <input type="button" onclick="userMove(1)" id="buttonLeft" value="Pick the leftmost number"> <input type="button" onclick="userMove(2)" id="buttonRight" value="Pick the rightmost number"> </p>
+  <p id = "current sequence"> </p>
+  <p id = "user numbers"> </p>
+  <p id = "cpu numbers"> </p>
+  <p id = "game finish"> </p>
+  <p> <input type="button" onclick="reset()" id="buttonReset" value="Reset"> </p>
+
+</body>
+</html>
